@@ -14,15 +14,27 @@ Se preferir não editar nada manualmente, este repositório traz dois scripts:
 
 | Script | Para que serve |
 |---|---|
-| `fix-backlight.sh` | Aplica a correção sozinho (faz backup, troca a configuração e roda o `update-grub`). Tem modos `--dry-run` (mostra o que faria) e `--rollback` (volta tudo ao original). |
+| `fix-backlight.sh` | Aplica a correção sozinho. Faz backup, mostra o que vai mudar, **pergunta "s/n" antes de cada passo importante**, roda o `update-grub` e verifica o resultado. |
 | `check-backlight.sh` | Verifica, depois de reiniciar, se o controle de brilho foi reconhecido. |
+
+O `fix-backlight.sh` tem alguns modos, pensados para todos os níveis de confiança:
+
+| Modo | O que faz |
+|---|---|
+| `./fix-backlight.sh` | Modo normal: **pede a senha do `sudo` logo no início** e aplica a correção com perguntas s/n antes de cada passo. |
+| `./fix-backlight.sh --dry-run` | **Ensaio geral**: mostra o que seria alterado, sem tocar em nada. Não precisa de senha. |
+| `./fix-backlight.sh --status` | **Raio-x**: mostra em que estágio a correção está (linha do GRUB, backup, se o `update-grub` já rodou, se o kernel já reconhece o backlight). Não precisa de senha. |
+| `./fix-backlight.sh --rollback` | Desfaz a correção inteira, restaurando o backup (pede a senha do `sudo` no início). |
+| `./fix-backlight.sh --yes` | Igual ao modo normal, mas não pergunta nada (usa "sim" em tudo). Para quem já entende e só quer resolver. |
+
+> **Por que o script pede a senha do `sudo` no começo?** Porque editar `/etc/default/grub` e rodar `update-grub` exigem permissão de administrador. Em vez de ele falhar no meio (quando você já viu metade do processo), ele **anda até o terminal pedir a senha uma única vez logo na largada**, e só depois começa as verificações. Se preferir, pode continuar usando `sudo ./fix-backlight.sh` — ele detecta que já está com privilégios e não pede nada de novo.
 
 Passo a passo com os scripts:
 
 ```bash
 cd ~/rv410-backlight-fix     # troque pelo caminho real da pasta onde você baixou o guia
-sudo ./fix-backlight.sh --dry-run    # opcional: veja o que será alterado
-sudo ./fix-backlight.sh
+./fix-backlight.sh --dry-run     # opcional: ensaio geral, sem tocar em nada
+./fix-backlight.sh               # vai pedir a senha do sudo e aplicar
 sudo reboot
 ```
 
@@ -36,9 +48,38 @@ E, se quiser voltar atrás (desfazer a correção):
 
 ```bash
 cd ~/rv410-backlight-fix
-sudo ./fix-backlight.sh --rollback
+./fix-backlight.sh --rollback   # também pede a senha do sudo
 sudo reboot
 ```
+
+#### O que as perguntas do script significam
+
+Quando você roda `./fix-backlight.sh`, ele **primeiro pede a senha do `sudo`** (para os modos que precisam de privilégio) e depois não altera nada sem avisar. Ele segue esta sequência, esperando você responder **s** (sim) ou **n** (não) em cada etapa:
+
+0. **Confere as dependências.** Verifica se os programas necessários (grep, sed, `lspci`, `update-grub`, etc.) estão instalados. Se faltar algum, ele **já mostra o comando de instalação** (ex: `sudo apt install pciutils grub2-common`) e só continua depois que você instalar.
+1. **Confere o hardware — o computador certo.** Ele olha dois sinais: a **placa de vídeo** (para confirmar Intel GMA 4500MHD/GM45) e o **modelo** lido do firmware (`Fabricante`/`Modelo` da BIOS). Se o aparelho *não* parecer o alvo deste guia, ele avisa e pergunta **"Quer continuar mesmo assim?"** — nada trava, você decide.
+2. Mostra a linha atual do GRUB e a linha que ficará no lugar, e pergunta: "Aplicar essa mudança?".
+3. Antes, faz um backup automático do arquivo original (`grub.bak`) — para poder desfazer depois.
+4. Percebe que editou o arquivo e pergunta: "Rodar `update-grub` agora?" (sem isso, o computador ignora a mudança — responda **s**).
+5. Depois de rodar, verifica sozinho se o resultado está no `grub.cfg`.
+6. Pergunta se você quer **reiniciar agora** (o brilho só muda depois que o computador liga de novo).
+
+Responder `n` em qualquer etapa **não estraga nada** — ele para no lugar exato, informa o que ficou faltando fazer manualmente, e você pode continuar quando quiser.
+
+#### E se o script disser que faltam componentes?
+
+É só instalar. No Lubuntu/Debian/Ubuntu, abra o terminal e rode o comando que ele sugeriu:
+
+```bash
+sudo apt update
+sudo apt install pciutils grub2-common
+```
+
+Depois repita `./fix-backlight.sh` normalmente. O próprio script faz essa checagem sozinho antes de qualquer outra coisa — você não precisa aprender esses comandos de cor.
+
+#### Por que o script "verifica o modelo do computador"?
+
+Porque a correção só faz sentido no notebook certo. O chip de vídeo que falha (Intel GMA 4500MHD) é o mesmo em vários Samsung RV410/RV510/S3510/E3510 da época — e é *muito* melhor o script avisar "seu aparelho não parece ser o do guia" do que você mexer à toa e chegar à conclusão errada. A checagem é apenas informativa (no modo `--status` e `--dry-run`) e, no modo de aplicar, você continua informado de que escolheu seguir mesmo assim.
 
 > O restante deste guia explica o passo a passo manual, que é útil para entender *o que* está acontecendo — e é o mesmo raciocínio que o script usa internamente.
 
@@ -174,7 +215,7 @@ Em alguns casos, ao segurar a tecla de brilho por muito tempo (em vez de apertar
 
 Cada passo deste guia guarda uma "rede de segurança":
 
-- Se você usou os **scripts**, rode: `sudo ./fix-backlight.sh --rollback` e reinicie.
+- Se você usou os **scripts**, rode: `./fix-backlight.sh --rollback` e reinicie.
 - Se você fez **manualmente**, restaure a cópia de segurança que fez no início:
 
 ```bash

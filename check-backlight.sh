@@ -31,7 +31,7 @@ if [[ ${#devices[@]} -eq 0 ]]; then
     echo "  3. Esta placa não é Intel GMA 4500MHD (confira com: lspci | grep -i vga)"
     echo
     echo "Próximos passos sugeridos:"
-    echo "  - Rode: sudo ./fix-backlight.sh && sudo reboot"
+    echo "  - Rode: ./fix-backlight.sh && sudo reboot (ele pede a senha do sudo)"
     echo "  - Se não funcionar, tente os parâmetros alternativos do README:"
     echo "      video.use_native_backlight=1  ou  acpi_backlight=vendor"
     exit 1
