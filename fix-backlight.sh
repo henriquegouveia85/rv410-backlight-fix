@@ -19,6 +19,7 @@ set -euo pipefail
 GRUB_FILE="/etc/default/grub"
 BACKUP_FILE="/etc/default/grub.bak"
 NEW_PARAM="acpi_backlight=native"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 
 print_usage() {
     sed -n '2,12p' "$0" | sed 's/^# \{0,2\}//'
@@ -96,7 +97,7 @@ apply_fix() {
 
     echo
     echo "Feito! Reinicie o computador (sudo reboot) e confira com:"
-    echo "  ./check-backlight.sh"
+    echo "  $SCRIPT_DIR/check-backlight.sh"
 }
 
 dry_run() {

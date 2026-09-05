@@ -20,16 +20,22 @@ Se preferir não editar nada manualmente, este repositório traz dois scripts:
 Passo a passo com os scripts:
 
 ```bash
-cd ~/Downloads/rv410-backlight-fix
+cd ~/rv410-backlight-fix     # troque pelo caminho real da pasta onde você baixou o guia
 sudo ./fix-backlight.sh --dry-run    # opcional: veja o que será alterado
 sudo ./fix-backlight.sh
 sudo reboot
-./check-backlight.sh
+```
+
+Depois de reiniciar, o terminal reabre no seu diretório pessoal. Para verificar, navegue de novo até a pasta ou use o caminho completo:
+
+```bash
+cd ~/rv410-backlight-fix && ./check-backlight.sh
 ```
 
 E, se quiser voltar atrás (desfazer a correção):
 
 ```bash
+cd ~/rv410-backlight-fix
 sudo ./fix-backlight.sh --rollback
 sudo reboot
 ```
